@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: mart_results
+    description: "Final match results with winner, result type and goal stats"
+    columns:
+      - name: match_id
+        description: "Unique match identifier"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: result_type
+        description: "Home Win, Away Win, or Draw"
+        data_tests: 
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Home Win', 'Away Win', 'Draw']
+
+      - name: total_goals
+        description: "Sum of home and away goals, must be zero or positive"
+        data_tests:
+          - not_null

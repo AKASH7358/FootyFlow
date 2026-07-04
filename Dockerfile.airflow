@@ -1,0 +1,9 @@
+FROM apache/airflow:2.9.1
+
+# Install all required packages at build time
+# These get baked into the image and survive restarts forever
+RUN pip install --no-cache-dir \
+    kafka-python-ng \
+    psycopg2-binary \
+    dbt-postgres \
+    requests

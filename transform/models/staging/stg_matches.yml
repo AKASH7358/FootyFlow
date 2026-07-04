@@ -1,0 +1,21 @@
+version: 2
+
+models:
+  - name: stg_matches
+    description: "Cleaned and standardised match data from raw kafka stream"
+    columns:
+      - name: match_id
+        description: "Unique match identifier"
+        data_tests:
+          - unique 
+          - not_null
+      
+      - name: home_goals
+        description: "Goals scored by home team, parsed from score string"
+        data_tests:
+         - not_null
+
+      - name: away_goals
+        description: "Goals scored by away team, parsed form score string"
+        data_tests:
+          - not_null

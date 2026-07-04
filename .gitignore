@@ -1,0 +1,11 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+transform/logs/
+transform/target/
+transform/dbt_packages/
+airflow/logs/
+*.db
+.DS_Store
+transform/profiles.yml
