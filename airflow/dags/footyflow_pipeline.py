@@ -2,11 +2,21 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 
+# Ops agent: diagnoses failed tasks with Claude. Optional - the pipeline runs unchanged without it.
+try:
+    import sys
+    sys.path.insert(0, "/opt/airflow")
+    from agent.airflow_callback import on_failure_diagnose as _ops_agent_callback
+except Exception:
+    _ops_agent_callback = None
+
 default_args = {
     'owner': 'akash',
     'retries': 1,
     'retry_delay': timedelta(minutes=1),
 }
+if _ops_agent_callback is not None:
+    default_args['on_failure_callback'] = _ops_agent_callback
 
 with DAG(
     dag_id = 'footyflow_pipeline',

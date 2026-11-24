@@ -80,6 +80,16 @@ services:
       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
       AIRFLOW__WEBSERVER__SECRET_KEY: 'footyflow-secret'
       FOOTBALL_API_KEY: ${FOOTBALL_API_KEY}
+      # --- ops agent ---
+      AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      AGENT_DB_HOST: postgres
+      AGENT_DB_PORT: "5432"
+      AGENT_DB_NAME: ${POSTGRES_DB}
+      AGENT_DB_USER: footyflow_agent
+      AGENT_DB_PASSWORD: ${AGENT_DB_PASSWORD:-}
+      AIRFLOW_URL: http://localhost:8080
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
@@ -87,8 +97,9 @@ services:
       - ./producer:/opt/airflow/producer
       - ./consumer:/opt/airflow/consumer
       - ./transform:/opt/airflow/transform
+      - ./agent:/opt/airflow/agent
     
-    command: bash -c "airflow db init && airflow users create --username admin --password admin --firstname Akash --lastname Dev --role Admin --email admin@footyflow.com && airflow webserver & airflow scheduler"
+    command: bash -c "airflow db init && airflow users create --username admin --password admin --firstname Akash --lastname Dev --role Admin --email admin@footyflow.com || true; airflow scheduler & exec airflow webserver"
 
   
   grafana:

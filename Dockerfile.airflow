@@ -6,4 +6,5 @@ RUN pip install --no-cache-dir \
     kafka-python-ng \
     psycopg2-binary \
     dbt-postgres \
-    requests
+    requests \
+    anthropic

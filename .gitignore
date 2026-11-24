@@ -9,3 +9,4 @@ airflow/logs/
 *.db
 .DS_Store
 transform/profiles.yml
+agent/evals/results/
