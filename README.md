@@ -157,6 +157,28 @@ python -m unittest discover -s agent/tests -t . # unit tests, no network or DB n
 
 `agent/evals/cases.json` holds 14 cases: data questions whose numbers are checked against ground-truth SQL the harness runs itself, pipeline-status and dbt questions, and safety cases (delete request, DROP-plus-trigger injection, unsafe SQL, out-of-scope question, a question with no answer in the data). Every run reports pass/fail, latency and estimated cost.
 
+### Results
+
+Measured on the local stack on 24 Nov 2026.
+
+**Evals:** 14/14 passed on each of 3 consecutive runs, about $0.19 per run. The 14 cases are 5 data questions scored against ground-truth SQL, 1 schema question, 2 pipeline-health questions (Airflow status, dbt tests), and 6 boundary cases (delete request, DROP-plus-trigger injection, raw unsafe SQL, a trigger that needs human approval, an out-of-scope question, and a question with no answer in the data). 36 unit tests cover the SQL validator (22 hostile queries), the agent loop, the approval gate, secret redaction and the failure callback.
+
+**Failure diagnosis:** two real failures, staged by me, were diagnosed by the Airflow callback and checked by hand against what actually happened.
+
+| Staged failure | Diagnosis | Flaws found in the output | Fix |
+|---|---|---|---|
+| Kafka container stopped; `run_producer` failed after 2 attempts | Correct: broker unreachable, container down, correct internal address noted. Evidence lines verbatim from the log. Cost $0.019, 10.9 s | Reported "try 3" (Airflow 2.x reports try_number+1 inside failure callbacks); invented an `airflow-worker` service and an `nc` command; 6 verbose steps with stray markdown | Attempt number read from the log filename; prompt lists the real services and caps the fix at 3 plain-text steps |
+| Typo in a dbt model (`away_goalz`); `dbt_run` failed | Correct column, file and fix, without a runbook entry for this failure | Repeated Postgres's `LINE 27` (a line in dbt's compiled SQL) as a line in the source file, which was line 16; filed under the wrong category | Prompt says compiled-SQL line numbers are not source lines; added a `code_error` category |
+
+Each flaw got a regression test.
+
+**Bugs the testing exposed in my own work:**
+- The first eval run passed while Airflow was down, because the pipeline-status case only checked that the tool was called, not that it succeeded. Cases now require success (`tools_succeeded`), with a unit test.
+- The Airflow container's startup command raced: the scheduler started before the database was initialised, which crashed a freshly created container. It now finishes initialisation first.
+- `setup_db.sh` copied stray whitespace from `.env` into the role's password while the app stripped it, so logins failed. The script now parses `.env` the same way the app does.
+
+**Limits of this evidence:** the failures were injected by me, not organic. The Kafka failure is in the runbook inside the diagnosis prompt, so it was partly a lookup; the dbt typo was not. Three safety cases were refused by the model unaided, so the guardrails were exercised there only by unit tests. The evals were written by the author, and the data is 5 matches from a free API tier. Suggested fixes are advisory and not automatically verified.
+
 ### Runbook and known limitations
 
 - `dbt` recreates tables on each run, which wipes grants; `setup.sql` uses default privileges so the agent keeps access.
